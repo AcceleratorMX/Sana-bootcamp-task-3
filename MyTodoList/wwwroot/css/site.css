@@ -24,6 +24,19 @@ body {
 .main {
   min-height: 100vh;
 }
+td {
+  border: none;
+}
+
+.jobs-line {
+  transition: transform 0.1s;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.jobs-line:hover {
+  transform: scale(1.01);
+  background-color: #f4f4f4;
+}
 
 .footer {
   margin: 0 auto;

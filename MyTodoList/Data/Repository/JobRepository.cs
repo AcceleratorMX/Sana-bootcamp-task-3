@@ -10,30 +10,34 @@ public class JobRepository(DatabaseService databaseService)
     public async Task<int> AddJob(Job job)
     {
         using var db = _databaseService.OpenConnection();
-        return await db.ExecuteAsync(
-            "INSERT INTO Jobs (Name, CategoryId, IsDone) VALUES (@Name, @CategoryId, @IsDone)",
-            job);
+        const string query = "INSERT INTO Jobs (Name, CategoryId, IsDone) VALUES (@Name, @CategoryId, @IsDone)";
+
+        return await db.ExecuteAsync(query, job);
     }
+
 
     public async Task<Job> GetJob(int id)
     {
         using var db = _databaseService.OpenConnection();
-        return await db.QueryFirstOrDefaultAsync<Job>("SELECT * FROM Jobs WHERE Id = @Id", new { Id = id }) ??
-               throw new InvalidOperationException();
+        const string query = "SELECT Id, Name, CategoryId, IsDone FROM Jobs WHERE Id = @Id ";
+        return await db.QueryFirstOrDefaultAsync<Job>(query, new { Id = id }) ?? 
+               throw new InvalidOperationException($"Job with id {id} not found!");
     }
+
 
     public async Task<IEnumerable<Job>> GetJobs()
     {
         using var connection = _databaseService.OpenConnection();
-
-        var jobs = await connection.QueryAsync<Job>("SELECT * FROM Jobs");
-        var categories = await connection.QueryAsync<Category>("SELECT * FROM Categories");
-
+    
+        var jobs = (await connection.QueryAsync<Job>("SELECT Id, Name, CategoryId, IsDone FROM Jobs")).ToList();
+        var categories = (await connection.QueryAsync<Category>("SELECT Id, Name FROM Categories")).ToList();
+    
         foreach (var job in jobs)
         {
-            job.Category = categories.FirstOrDefault(c => c.Id == job.CategoryId);
+            job.Category = categories.FirstOrDefault(c => c.Id == job.CategoryId) ??
+                           throw new InvalidOperationException();
         }
-
+    
         return jobs;
     }
 
@@ -42,7 +46,9 @@ public class JobRepository(DatabaseService databaseService)
     {
         using var db = _databaseService.OpenConnection();
         return await db.ExecuteAsync(
-            "UPDATE Jobs SET Name = @Name, CategoryId = @CategoryId, IsDone = @IsDone WHERE Id = @Id", job);
+            "UPDATE Jobs SET Name = @Name, CategoryId = @CategoryId, IsDone = @IsDone WHERE Id = @Id",
+            job
+        );
     }
 
 

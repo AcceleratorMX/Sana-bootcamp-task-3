@@ -14,17 +14,13 @@ public class Program
 
         builder.Services.AddScoped<JobRepository>();
         builder.Services.AddScoped<CategoryRepository>();
-
-        var serverConnectionString = builder.Configuration.GetConnectionString("ServerConnection") ?? 
-                                     throw new ArgumentNullException(nameof(DatabaseService));
-        var dbConnectionString = builder.Configuration.GetConnectionString("DatabaseConnection") ??
-                                 throw new ArgumentNullException(nameof(DatabaseService));
-
-
-        var databaseService = new DatabaseService(serverConnectionString, dbConnectionString);
-        databaseService.CreateDatabase();
-        databaseService.CreateTables();
-
+        
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+                                 throw new Exception("Connection string is not valid!");
+        
+        var databaseService = new DatabaseService(connectionString);
+        databaseService.AddInitialTables();
+        databaseService.AddInitialCategories();
         builder.Services.AddSingleton(databaseService);
 
         var app = builder.Build();
@@ -46,7 +42,7 @@ public class Program
 
         app.MapControllerRoute(
             name: "default",
-            pattern: "{controller=Jobs}/{action=Todo}/{id?}");
+            pattern: "{controller=Todo}/{action=Todo}/{id?}");
 
         app.Run();
     }
