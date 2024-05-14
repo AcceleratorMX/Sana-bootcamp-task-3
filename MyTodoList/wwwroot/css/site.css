@@ -51,7 +51,11 @@ button {
 
 .add-form {
   margin: 100px 0 50px 0;
+}
 
+.validation-error {
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .input-job-name {
