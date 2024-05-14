@@ -32,10 +32,12 @@ public class DatabaseService
         if (!exists)
         {
             connection.Execute($"CREATE DATABASE {databaseName}");
+            AddInitialTables();
+            AddInitialCategories();
         }
     }
 
-    public void AddInitialTables()
+    private void AddInitialTables()
     {
         using var connection = OpenConnection();
 
@@ -63,8 +65,8 @@ public class DatabaseService
 
         connection.Execute(query);
     }
-    
-    public void AddInitialCategories()
+
+    private void AddInitialCategories()
     {
         using var connection = OpenConnection();
 

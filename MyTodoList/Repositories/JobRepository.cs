@@ -1,9 +1,11 @@
 ﻿using Dapper;
+using MyTodoList.Data;
 using MyTodoList.Data.Models;
+using MyTodoList.Interfaces;
 
-namespace MyTodoList.Data.Repository;
+namespace MyTodoList.Repositories;
 
-public class JobRepository(DatabaseService databaseService)
+public class JobRepository(DatabaseService databaseService) : IJobRepository
 {
     private readonly DatabaseService _databaseService = databaseService;
 

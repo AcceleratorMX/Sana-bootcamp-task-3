@@ -1,63 +1,51 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MyTodoList.Data.Models;
-using MyTodoList.Data.Repository;
+using MyTodoList.Interfaces;
+using MyTodoList.ViewModels;
 
 namespace MyTodoList.Controllers;
 
-public class TodoController(JobRepository jobRepository, CategoryRepository categoryRepository)
+public class TodoController(IJobRepository jobRepository, ICategoryRepository categoryRepository)
     : Controller
 {
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> Todo()
+    {
+        var model = new JobViewModel
+        {
+            NewJob = new Job(),
+            Jobs = (await jobRepository.GetJobs())
+                .OrderByDescending(job => job.IsDone)
+                .ThenByDescending(job => job.Id)
+        };
+
+        ViewBag.Categories = await GetCategoriesSelectList();
+
+        return View(model);
+    }
+    
+    private async Task<SelectList> GetCategoriesSelectList()
     {
         var categories = await categoryRepository.GetCategories();
-        ViewBag.Categories = new SelectList(categories, "Id", "Name");
-        return View(new Job());
+        return new SelectList(categories, "Id", "Name");
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(IFormCollection collection)
+    public async Task<IActionResult> Todo(JobViewModel model)
     {
-        var job = new Job
-        {
-            Name = collection["Name"].ToString(),
-            IsDone = false
-        };
+        var job = model.NewJob;
 
-        if (string.IsNullOrEmpty(job.Name))
+        if (string.IsNullOrEmpty(job.Name) || !job.CategoryId.HasValue || job.CategoryId == 0)
         {
-            ModelState.AddModelError("Name", "Введіть назву завдання!");
+            ViewBag.Categories = await GetCategoriesSelectList();
+            model.Jobs = await jobRepository.GetJobs();
+            return View(model);
         }
 
-        if (int.TryParse(collection["CategoryId"], out int categoryId))
-        {
-            job.CategoryId = categoryId;
-        }
-        else
-        {
-            ModelState.AddModelError("CategoryId", "Оберіть категорію!");
-        }
-
-        if (ModelState.IsValid)
-        {
-            await jobRepository.AddJob(job);
-            return RedirectToAction("Todo");
-        }
-
-        var categories = await categoryRepository.GetCategories();
-        ViewBag.Categories = new SelectList(categories, "Id", "Name", job.CategoryId);
-        return View(job);
+        await jobRepository.AddJob(job);
+        return RedirectToAction("Todo");
     }
-
-    public async Task<IActionResult> Todo()
-    {
-        var jobs = (await jobRepository.GetJobs())
-            .OrderByDescending(job => job.IsDone)
-            .ThenByDescending(job => job.Id);
-        return View(jobs);
-    }
-
 
     [HttpPost]
     public async Task<IActionResult> ChangeProgress(int id)

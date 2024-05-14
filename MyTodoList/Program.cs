@@ -1,5 +1,6 @@
 using MyTodoList.Data;
-using MyTodoList.Data.Repository;
+using MyTodoList.Interfaces;
+using MyTodoList.Repositories;
 
 namespace MyTodoList;
 
@@ -12,15 +13,13 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllersWithViews();
 
-        builder.Services.AddScoped<JobRepository>();
-        builder.Services.AddScoped<CategoryRepository>();
+        builder.Services.AddScoped<IJobRepository, JobRepository>();
+        builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
                                  throw new Exception("Connection string is not valid!");
         
         var databaseService = new DatabaseService(connectionString);
-        databaseService.AddInitialTables();
-        databaseService.AddInitialCategories();
         builder.Services.AddSingleton(databaseService);
 
         var app = builder.Build();
